@@ -8,6 +8,12 @@ class FileUtil:
         self.movie_ratings_paths = movie_ratings_paths
 
     def top_k_movies(self, k):
+        '''
+        Statistic the top-K movies
+        :param k: The number of the topest movies
+        :return:
+        Save the top-K movies as 'top-k-movies.txt'
+        '''
         movie_dic = dict()
         with open(self.movie_ratings_paths, 'r') as f:
             for line in f.readlines():
@@ -48,6 +54,12 @@ class FileUtil:
             f.write(str(user_saw_movies_dic))
 
     def user_saw_k_movies_dic(self, k):
+        """
+        Statistic the dictionary that user's movies ranking for the top-K movies
+        :param k: The number of the topest movies
+        :return:
+        Save the dictionary as a txt document named 'user_saw_k_movies_dic.txt'
+        """
         k_top_movies = self.build_candidate_set(k)
         with open('data/user_saw_movies_dic.txt', 'r') as f:
             user_saw_movies_dic = eval(f.read())
@@ -71,9 +83,8 @@ class FileUtil:
                                 break
                         if flag:
                             user_saw_k_movies_dic[user_id].insert(0, movie)
-        with open('data/user_saw_'+str(k)+'movies_dic.txt', 'w') as f:
+        with open('data/user_saw_'+str(k)+'_movies_dic.txt', 'w') as f:
             f.write(str(user_saw_k_movies_dic))
-        print(len(user_saw_k_movies_dic.items()))
 
     @staticmethod
     def build_candidate_set(k):
@@ -82,10 +93,10 @@ class FileUtil:
         return k_top_movies[:, 0]
 
 
-trusts_path = 'data/trusts.txt'
-movie_ratings_paths = 'data/movie-ratings.txt'
-fu = FileUtil(trusts_path, movie_ratings_paths)
+# trusts_path = 'data/trusts.txt'
+# movie_ratings_paths = 'data/movie-ratings.txt'
+# fu = FileUtil(trusts_path, movie_ratings_paths)
 # fu.top_k_movies(3)
 # fu.build_candidate_set(3)
 # fu.user_saw_movies()
-fu.user_saw_k_movies_dic(3)
+# fu.user_saw_k_movies_dic(3)
