@@ -83,8 +83,19 @@ class FileUtil:
                                 break
                         if flag:
                             user_saw_k_movies_dic[user_id].insert(0, movie)
+        user_temp = dict()
+        for user_id in user_saw_k_movies_dic:
+            movies_list = user_saw_k_movies_dic[user_id]
+            user_temp[user_id] = dict()
+            if len(movies_list) == 0:
+                continue
+            else:
+                for i in range(len(movies_list)):
+                    mv_id = list(movies_list[i].keys())[0]
+                    mv_rating = movies_list[i][mv_id]
+                    user_temp[user_id][mv_id] = mv_rating
         with open('data/user_saw_'+str(k)+'_movies_dic.txt', 'w') as f:
-            f.write(str(user_saw_k_movies_dic))
+            f.write(str(user_temp))
 
     @staticmethod
     def build_candidate_set(k):
@@ -97,6 +108,6 @@ class FileUtil:
 # movie_ratings_paths = 'data/movie-ratings.txt'
 # fu = FileUtil(trusts_path, movie_ratings_paths)
 # fu.top_k_movies(3)
-# fu.build_candidate_set(3)
+# print(fu.build_candidate_set(3))
 # fu.user_saw_movies()
 # fu.user_saw_k_movies_dic(3)

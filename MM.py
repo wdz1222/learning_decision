@@ -61,14 +61,14 @@ class MM:
             movies_ratings = self.network.node[user_id]['ratings']
             saw_number = len(movies_ratings)
             if saw_number != 0:
-                movies_ratings = [list(mv.items())[0] for mv in movies_ratings]
-                movies_ratings_ids = set([mv[0] for mv in movies_ratings])
+                movies_ratings = list(self.network.node[user_id]['ratings'].items())
+                movies_ratings_ids = list(self.network.node[user_id]['ratings'].keys())
             if saw_number == 0:
+                T = T + 1
                 continue
             elif saw_number == 1:
                 movie_id = movies_ratings[0][0]
                 M.loc[movie_id, :] = M.loc[movie_id, :] + 1
-
             else:
                 for i in range(saw_number-1):
                     for j in range(i+1, saw_number):
@@ -91,6 +91,7 @@ class MM:
                     T.loc[tie_movie_id[j], tie_movie_id[i]] = T.loc[tie_movie_id[i], tie_movie_id[j]]
         for i in range(self.k):
             M.iloc[i, i] = 0
+            T.iloc[i, i] = 0
         # print(M)
         # print(T)
         return M, T
