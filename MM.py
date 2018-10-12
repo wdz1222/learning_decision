@@ -98,8 +98,8 @@ class MM:
 
 
 
-network_path = 'data/3-network.gpickle'
-k = 3
-mm = MM(network_path, k)
+# network_path = 'data/10-network.gpickle'
+# k = 10
+# mm = MM(network_path, k)
 # mm.build_M_and_T_matrix()
-mm.MM_algorithm()
+# mm.MM_algorithm()

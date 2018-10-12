@@ -107,7 +107,7 @@ class FileUtil:
 # trusts_path = 'data/trusts.txt'
 # movie_ratings_paths = 'data/movie-ratings.txt'
 # fu = FileUtil(trusts_path, movie_ratings_paths)
-# fu.top_k_movies(3)
-# print(fu.build_candidate_set(3))
+# fu.top_k_movies(10)
+# print(fu.build_candidate_set(10))
 # fu.user_saw_movies()
-# fu.user_saw_k_movies_dic(3)
+# fu.user_saw_k_movies_dic(10)

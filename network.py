@@ -3,10 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from file_treatment import FileUtil
 from scipy.special import comb
+np.set_printoptions(suppress=True)
 
 
 class Network:
-
 
     @staticmethod
     def build_network(trust_path, user_saw_k_movies_dic_path, user_saw_movies_dic_path, k):
@@ -60,17 +60,20 @@ class Network:
         for rel in G.edges():
             user1 = rel[0]
             user2 = rel[1]
-            G[user1][user2]['kendall'] = 1
             if user1 == user2:
                 continue
             else:
-                if len(G.node[user1]['ratings']) != 0 and len(G.node[user2]['ratings']) != 0:
-                    G[user1][user2]['kendall'] = G[user1][user2]['kendall'] - \
-                                                  Network.kendall(G.node[user1]['ratings'], G.node[user2]['ratings'], k)/nf
+                kd = Network.kendall(G.node[user1]['ratings'], G.node[user2]['ratings'], k)
+                if kd == 0:
+                    G[user1][user2]['kendall'] = 0
+                else:
+                    G[user1][user2]['kendall'] = kd/nf
         return G
 
     @staticmethod
     def kendall(rating1, rating2, k):
+        if len(rating1) == 0 or len(rating2) == 0:
+            return 0
         top_k_movies = FileUtil.build_candidate_set(k)
         rating1 = rating1.copy()
         rating2 = rating2.copy()
@@ -87,7 +90,6 @@ class Network:
                 else:
                     if Network.sgn(rating1[m1]-rating1[m2]) != Network.sgn(rating2[m1]-rating2[m2]):
                         kd = kd + 1
-        print(kd)
         return kd
 
     @staticmethod
@@ -105,23 +107,26 @@ class Network:
         for rel in G.edges():
             user1 = rel[0]
             user2 = rel[1]
-            G[user1][user2]['spearman'] = 1
             if user1 == user2:
                 continue
             else:
-                if len(G.node[user1]['ratings']) != 0 and len(G.node[user2]['ratings']) != 0:
-                    G[user1][user2]['spearman'] = G[user1][user2]['spearman'] - \
-                                                  Network.spearman(G.node[user1]['ratings'], G.node[user2]['ratings'])/sk
+                s = Network.spearman(G.node[user1]['ratings'], G.node[user2]['ratings'])
+                if s == 0:
+                    G[user1][user2]['spearman'] = 0
+                else:
+                    G[user1][user2]['spearman'] = s/sk
         return G
 
     @staticmethod
     def spearman(rating1, rating2):
+        if len(rating1) == 0 or len(rating2) == 0:
+            return 0
         rating1 = rating1.copy()
         rating2 = rating2.copy()
         rating1_num = dict()
         rating2_num = dict()
-        rating1_tr = sorted(rating1.items(),key = lambda x:x[1],reverse = True)
-        rating2_tr = sorted(rating2.items(),key = lambda x:x[1],reverse = True)
+        rating1_tr = sorted(rating1.items(), key=lambda x: x[1], reverse=True)
+        rating2_tr = sorted(rating2.items(), key=lambda x: x[1], reverse=True)
         num1 = 0
         num2 = 0
         rating1_num[rating1_tr[0][0]] = num1
@@ -166,26 +171,56 @@ class Network:
         plt.show()
 
     @staticmethod
-    def basic_network_infomation(network_path):
+    def basic_network_infomation(network_path, k):
         G = nx.read_gpickle(network_path)
-        print(G.number_of_nodes())
-        print(G.number_of_edges())
-        print(np.mean(list(G.out_degree().values())))
-        print(np.mean(list(G.in_degree().values())))
-        for user in G.nodes():
-            print(user+': '+str(len(G.node[user]['ratings'])))
-        # print(G.neighbors('8178'))
-        # for edge in G.edges():
-        #     print(str(edge[0]))
-        #     print(str(edge[0])+','+str(edge[1]) + ': ' + str(G[edge[0]][edge[1]]['trust']))
+        top_k_movies = FileUtil.build_candidate_set(k)
+        dist = np.empty(shape=(G.number_of_edges(), 3))
+        mv_rating1 = np.empty(shape=(G.number_of_edges(), k))
+        mv_scoring1 = np.empty(shape=(G.number_of_edges(), k))
+        mv_rating2 = np.empty(shape=(G.number_of_edges(), k))
+        mv_scoring2 = np.empty(shape=(G.number_of_edges(), k))
+        i = 0
+        for edge in G.edges():
+            user1 = edge[0]
+            user2 = edge[1]
+            if user1 != user2:
+                neighbor1 = set(G.neighbors(user1))
+                neighbor2 = set(G.neighbors(user2))
+                common_friends = neighbor1.intersection(neighbor2)
+                value = 0
+                for friend in common_friends:
+                    value = G[user1][friend]['trust']*G[user2][friend]['trust']+value
+                dist[i, 0] = value
+                dist[i, 1] = G[user1][user2]['spearman']
+                dist[i, 2] = G[user1][user2]['kendall']
 
+                rating1 = G.node[user1]['ratings'].copy()
+                rating2 = G.node[user2]['ratings'].copy()
+                for mv in top_k_movies:
+                    if mv not in rating1.keys():
+                        rating1[mv] = 0
+                    if mv not in rating2.keys():
+                        rating2[mv] = 0
+                rating1_tr = sorted(rating1.items(), key=lambda x: x[1], reverse=True)
+                rating2_tr = sorted(rating1.items(), key=lambda x: x[1], reverse=True)
+                for j in range(k):
+                    mv_rating1[i, j] = np.argwhere(top_k_movies == rating1_tr[j][0])[0][0]
+                    mv_rating2[i, j] = np.argwhere(top_k_movies == rating2_tr[j][0])[0][0]
+                    mv_scoring1[i, j] = rating1_tr[j][1]
+                    mv_scoring2[i, j] = rating2_tr[j][1]
+                i = i + 1
+        np.savetxt('data/' + str(k) + '_dist.txt', dist)
+        np.savetxt('data/' + str(k) + '_mv_rating1.txt', mv_rating1, fmt='%d')
+        np.savetxt('data/' + str(k) + '_mv_rating2.txt', mv_rating2, fmt='%d')
+        np.savetxt('data/' + str(k) + '_mv_scoring1.txt', mv_scoring1, fmt='%d')
+        np.savetxt('data/' + str(k) + '_mv_scoring2.txt', mv_scoring2, fmt='%d')
 
+#
 trust_path = 'data/trusts.txt'
 user_saw_k_movies_dic_path = 'data/user_saw_3_movies_dic.txt'
 user_saw_movies_dic_path = 'data/user_saw_movies_dic.txt'
 k = 3
 Network.build_network(trust_path, user_saw_k_movies_dic_path, user_saw_movies_dic_path, k)
 
-# network_path = 'data/3-network.gpickle'
-# Network.basic_network_infomation(network_path)
-# Network.draw_network(network_path)
+network_path = 'data/3-network.gpickle'
+Network.basic_network_infomation(network_path, k)
