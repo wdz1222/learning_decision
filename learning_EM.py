@@ -2,8 +2,6 @@ import networkx as nx
 import numpy as np
 from functools import reduce
 from file_treatment import FileUtil
-from network import Network
-from scipy.special import comb
 from scipy.optimize import minimize
 
 
@@ -16,21 +14,24 @@ class EM:
         self.dis_name = dis_name
 
     def EM_algorithm(self):
-        a = 1
-        b = 2
-        alpha = 2
+        a = 0.5
+        b = 1
+        alpha = 2.5
         v = dict()
         for movie_id in self.top_k_movies:
-            v[movie_id] = 1/self.k
+            v[movie_id] = np.random.uniform(low=0.0, high=1.0)
+            # v[movie_id] = 1/self.k
+        for movie_id in self.top_k_movies:
+            v[movie_id] = v[movie_id] / np.sum(list(v.values()))
         scp, fcp = self.build_condi_prob(a, b, alpha, v)
         print(scp)
         print(fcp)
         bnds = list()
         for i in range(self.k):
-            bnds.append((0, 1))
-        bnds.append((0, None))
-        bnds.append((0, None))
-        bnds.append((1, None))
+            bnds.append((0.001, 0.999))
+        bnds.append((0.1, 3))
+        bnds.append((0.1, 3))
+        bnds.append((0.1, 10))
         cons = dict()
         cons['type'] = 'eq'
         cons['fun'] = lambda x: np.sum(x[0:self.k])
@@ -39,12 +40,14 @@ class EM:
         x0.append(b)
         x0.append(alpha)
         res = minimize(lambda x: self.obj(x, succ_condi_prob=scp, fail_condi_prob=fcp), x0=x0, constraints=cons,
-                       bounds=bnds, method='Powell')
+                       bounds=bnds, method='SLSQP')
         print(res.fun)
         print(res.success)
+        print(res.message)
         print(res.x)
 
     def obj(self, x, succ_condi_prob, fail_condi_prob):
+        print(x)
         v = dict()
         for i in range(self.k):
             v[self.top_k_movies[i]] = x[i]

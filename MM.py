@@ -97,9 +97,9 @@ class MM:
         return M, T
 
 
-
-# network_path = 'data/10-network.gpickle'
-# k = 10
+#
+# network_path = 'data/4-network.gpickle'
+# k = 4
 # mm = MM(network_path, k)
 # mm.build_M_and_T_matrix()
 # mm.MM_algorithm()

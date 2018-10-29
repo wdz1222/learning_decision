@@ -83,12 +83,10 @@ class Network:
             if movie not in rating2.keys():
                 rating2[movie] = 0
         kd = 0
-        for m1 in top_k_movies:
-            for m2 in top_k_movies:
-                if m1 == m2:
-                    continue
-                else:
-                    if Network.sgn(rating1[m1]-rating1[m2]) != Network.sgn(rating2[m1]-rating2[m2]):
+        for p in range(k-1):
+            for q in range(p+1, k):
+                if Network.sgn(rating1[top_k_movies[p]]-rating1[top_k_movies[q]]) != \
+                        Network.sgn(rating2[top_k_movies[p]]-rating2[top_k_movies[q]]):
                         kd = kd + 1
         return kd
 
@@ -123,6 +121,12 @@ class Network:
             return 0
         rating1 = rating1.copy()
         rating2 = rating2.copy()
+        top_k_movies = FileUtil.build_candidate_set(k)
+        for movie in top_k_movies:
+            if movie not in rating1.keys():
+                rating1[movie] = 0
+            if movie not in rating2.keys():
+                rating2[movie] = 0
         rating1_num = dict()
         rating2_num = dict()
         rating1_tr = sorted(rating1.items(), key=lambda x: x[1], reverse=True)
@@ -132,20 +136,16 @@ class Network:
         rating1_num[rating1_tr[0][0]] = num1
         rating2_num[rating2_tr[0][0]] = num2
         sp = 0
-        if len(rating1_tr) != 1:
-            for i in range(1, len(rating1_tr)):
-                if rating1_tr[i][1] < rating1_tr[i-1][1]:
-                    num1 = num1 + 1
-                rating1_num[rating1_tr[i][0]] = num1
-        if len(rating2_tr) != 1:
-            for i in range(1, len(rating2_tr)):
-                if rating2_tr[i][1] < rating2_tr[i-1][1]:
-                    num2 = num2 + 1
-                rating2_num[rating2_tr[i][0]] = num2
-        for movie in rating1.keys():
-            if movie in rating2.keys():
-                sp = sp + abs(rating1_num[movie]-rating2_num[movie])
-                rating2.pop(movie)
+        for i in range(1, len(rating1_tr)):
+            if rating1_tr[i][1] < rating1_tr[i-1][1]:
+                num1 = num1 + 1
+            rating1_num[rating1_tr[i][0]] = num1
+        for i in range(1, len(rating2_tr)):
+            if rating2_tr[i][1] < rating2_tr[i-1][1]:
+                num2 = num2 + 1
+            rating2_num[rating2_tr[i][0]] = num2
+        for movie in top_k_movies:
+            sp = sp + abs(rating1_num[movie]-rating2_num[movie])
         return sp
 
 
@@ -174,11 +174,11 @@ class Network:
     def basic_network_infomation(network_path, k):
         G = nx.read_gpickle(network_path)
         top_k_movies = FileUtil.build_candidate_set(k)
-        dist = np.empty(shape=(G.number_of_edges(), 3))
-        mv_rating1 = np.empty(shape=(G.number_of_edges(), k))
-        mv_scoring1 = np.empty(shape=(G.number_of_edges(), k))
-        mv_rating2 = np.empty(shape=(G.number_of_edges(), k))
-        mv_scoring2 = np.empty(shape=(G.number_of_edges(), k))
+        dist = np.empty(shape=(G.number_of_edges()-G.number_of_nodes(), 3))
+        mv_rating1 = np.empty(shape=(G.number_of_edges()-G.number_of_nodes(), k))
+        mv_scoring1 = np.empty(shape=(G.number_of_edges()-G.number_of_nodes(), k))
+        mv_rating2 = np.empty(shape=(G.number_of_edges()-G.number_of_nodes(), k))
+        mv_scoring2 = np.empty(shape=(G.number_of_edges()-G.number_of_nodes(), k))
         i = 0
         for edge in G.edges():
             user1 = edge[0]
@@ -202,10 +202,13 @@ class Network:
                     if mv not in rating2.keys():
                         rating2[mv] = 0
                 rating1_tr = sorted(rating1.items(), key=lambda x: x[1], reverse=True)
-                rating2_tr = sorted(rating1.items(), key=lambda x: x[1], reverse=True)
+                rating2_tr = sorted(rating2.items(), key=lambda x: x[1], reverse=True)
+                print(rating1_tr)
+                print(rating2_tr)
+                print('-----')
                 for j in range(k):
-                    mv_rating1[i, j] = np.argwhere(top_k_movies == rating1_tr[j][0])[0][0]
-                    mv_rating2[i, j] = np.argwhere(top_k_movies == rating2_tr[j][0])[0][0]
+                    mv_rating1[i, j] = np.argwhere(top_k_movies == rating1_tr[j][0])[0][0]+1
+                    mv_rating2[i, j] = np.argwhere(top_k_movies == rating2_tr[j][0])[0][0]+1
                     mv_scoring1[i, j] = rating1_tr[j][1]
                     mv_scoring2[i, j] = rating2_tr[j][1]
                 i = i + 1
@@ -216,11 +219,12 @@ class Network:
         np.savetxt('data/' + str(k) + '_mv_scoring2.txt', mv_scoring2, fmt='%d')
 
 #
-trust_path = 'data/trusts.txt'
-user_saw_k_movies_dic_path = 'data/user_saw_3_movies_dic.txt'
-user_saw_movies_dic_path = 'data/user_saw_movies_dic.txt'
-k = 3
-Network.build_network(trust_path, user_saw_k_movies_dic_path, user_saw_movies_dic_path, k)
+# trust_path = 'data/trusts.txt'
+# user_saw_k_movies_dic_path = 'data/user_saw_3_movies_dic.txt'
+# user_saw_movies_dic_path = 'data/user_saw_movies_dic.txt'
+# k = 3
+# Network.build_network(trust_path, user_saw_k_movies_dic_path, user_saw_movies_dic_path, k)
 
-network_path = 'data/3-network.gpickle'
-Network.basic_network_infomation(network_path, k)
+network_path = 'data/4-network.gpickle'
+# Network.basic_network_infomation(network_path, k)
+Network.draw_network(network_path)

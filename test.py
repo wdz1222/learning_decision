@@ -18,5 +18,9 @@ from functools import reduce
 # # print(G.neighbors('1'))
 # a = {'a':2, 'b':3, 'c':4,'d':2}
 # print(reduce(lambda x,y: x*y, a.values()))
-a = np.array([2,1,3,4,0])
-print(np.argwhere(a == 1)[0][0])
+a = np.loadtxt('data/3_mv_scoring1.txt', dtype='int')
+b = np.loadtxt('data/3_mv_scoring2.txt', dtype='int')
+for i in range(len(a)):
+    for j in range(3):
+        if a[i, j] != b[i, j]:
+            print('~~~~')

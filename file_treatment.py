@@ -103,11 +103,11 @@ class FileUtil:
         k_top_movies = np.loadtxt(k_top_movies_path, dtype='str')
         return k_top_movies[:, 0]
 
-
+# k = 3
 # trusts_path = 'data/trusts.txt'
 # movie_ratings_paths = 'data/movie-ratings.txt'
 # fu = FileUtil(trusts_path, movie_ratings_paths)
-# fu.top_k_movies(10)
-# print(fu.build_candidate_set(10))
+# fu.top_k_movies(k)
+# # print(fu.build_candidate_set(10))
 # fu.user_saw_movies()
-# fu.user_saw_k_movies_dic(10)
+# fu.user_saw_k_movies_dic(3)
